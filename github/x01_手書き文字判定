@@ -1,0 +1,278 @@
+from tkinter import *
+from tkinter import ttk
+import tkinter.font as font
+from PIL import Image, ImageTk
+
+import tkinter as tk
+
+
+
+
+import keras
+from keras.datasets import mnist
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Flatten
+from keras.layers import Conv2D, MaxPooling2D
+from keras import backend as K
+from keras.models import load_model
+
+
+
+#from PIL import Image, Imagetk
+from matplotlib import cm
+%matplotlib inline
+
+
+# OpenCV のインポート
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+import datetime
+ 
+root = Tk()
+root.title('手書き数字判定')
+root.geometry("800x400")
+#cap.set(cv2.CAP_PROP_FPS, 60)           # カメラFPSを60FPSに設定
+#cap.set(cv2.CAP_PROP_FRAME_WIDTH, 300) # カメラ画像の横幅を1280に設定
+#cap.set(cv2.CAP_PROP_FRAME_HEIGHT,150) # カメラ画像の縦幅を720に設定
+# ラベル
+
+s = StringVar()
+ 
+# Frame as Widget Container
+frame1 = ttk.Frame(
+    root,
+    padding=5)
+frame1.grid()
+
+my_font = font.Font(root,family="System",size=20,weight="bold")
+
+label = ttk.Label(root, text= "予測数字：",font=my_font)
+label.place(x=350, y=160)
+
+label = ttk.Label(root, text= "accuracy:",font=my_font)
+label.place(x=350, y=60)
+
+#lbl = ttk.Label(text='数値')
+#lbl.place(x=30, y=70)
+
+# テキストボックス 
+#txt = ttk.Entry(width=20)
+#txt.place(x=90, y=70)
+
+# ======================================================---Button 1
+def b1_clicked():
+    button1.state(['pressed'])
+    button2.state(['!pressed'])
+    s.set("カメラ表示")
+    
+    cap = cv2.VideoCapture(1) 
+
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH,300) # カメラ画像の横幅を1280に設定
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT,300) # カメラ画像の縦幅を720に設定
+    while(True):
+        # Capture frame-by-frame
+        ret, frame = cap.read()
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        #反転
+        # gray = cv2.bitwise_not(gray)
+
+        #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        #gray = cv2.resize(gray,(28,28))
+        # Display the resulting frame
+        cv2.imshow('frame',gray)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+              break
+
+            # When everything done, release the capturQe
+    fileName = "testxx.png"
+    gray = cv2.resize(gray,(128,128))
+    # gray = cv2.resize(gray,(28,28))
+    cv2.imwrite(fileName, gray)
+    #cap.release()
+    #cv2.destroyAllWindows()
+     #------------xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    im = Image.open("C:\\Users\\in310\\testxx.png")
+    im_list = np.asarray(im)
+    plt.imshow(im_list)
+    plt.show()           
+            
+            #------------xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    canvas = tk.Canvas(bg="black", width=200, height=200)
+   
+    canvas.place(x=100, y=100)
+
+    img = ImageTk.PhotoImage(file="C:\\Users\\in310\\testxx.png")
+    canvas.create_image(100,100, image=img)
+    #canvas.pack()
+    #im = PhotoImage(file = 'xtestxx.png')
+    canvas = Canvas(root, width = 300, height = 300, bg = 'white')
+   # canvas.create_image(0, 0, image = im)
+    canvas.pack()
+
+
+button1 = ttk.Button(
+        frame1,
+        #  image=icon1,
+        text='カメラ表示',
+        compound=TOP,
+        command=b1_clicked)
+button1.grid(row=3,column=1)
+
+## ==================================# Button 2
+def b2_clicked():
+    button1.state(['!pressed'])
+    button2.state(['pressed'])
+    s.set("判定表示")
+    
+    # KRASE
+   # import keras
+   # from keras.datasets import mnist
+   # from keras.models import Sequential
+   # from keras.layers import Dense, Dropout
+    from keras.optimizers import RMSprop
+   # from keras.preprocessing.image import img_to_array, load_img
+
+
+   # import keras
+   # from keras.datasets import mnist
+   # from keras.models import Sequential
+   # from keras.layers import Dense, Dropout
+   # from keras.optimizers import RMSprop
+   # import tkinter.font as font
+
+
+
+    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+ 
+    x_train = x_train.reshape(60000, 784)
+    x_test = x_test.reshape(10000, 784)
+ 
+    x_train = x_train.astype('float32')
+    x_test = x_test.astype('float32')
+ 
+    x_train /= 255 
+    x_test /= 255
+ 
+    y_train = keras.utils.to_categorical(y_train, 10)
+    y_test = keras.utils.to_categorical(y_test, 10)
+ 
+    model = Sequential()
+    model.add(Dense(512, activation='relu', input_shape=(784,)))
+    model.add(Dropout(0.2))
+    model.add(Dense(512, activation='relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(10, activation='softmax'))
+ 
+    model.compile(loss='categorical_crossentropy',
+              optimizer=RMSprop(),
+              metrics=['accuracy'])
+ 
+    history = model.fit(x_train, y_train,  #トレーニングデータ
+                    batch_size=100,    #バッチサイズの指定
+                    epochs=20,         #エポック数の指定
+                    verbose=1,         #ログ出力の指定.
+                    validation_data=(x_test, y_test))  #テストデータ
+ 
+    score = model.evaluate(x_test, y_test, verbose=0)
+    print('Test loss:', score[0])
+    print('Test accuracy:', score[1])
+    
+    my_font = font.Font(root,family="System",size=40,weight="bold")
+    label = ttk.Label(root, text= score[1],font=my_font)
+    label.place(x=460, y=50)
+                      
+    model.save("model_mnist_cnn.h5")
+    
+    #---------
+    plt.plot(history.history['acc'])
+    plt.plot(history.history['val_acc'])
+    plt.title('accuracy')
+    plt.legend(['train','test'],loc='upper left')
+    plt.show()
+    
+     
+button2 = ttk.Button(
+    frame1,
+#    image=icon2,
+    text='学習開始',
+    compound=TOP,
+    command=b2_clicked)
+button2.grid(row=3,column=2)
+## ============================================----b2
+
+## ==================================# Button 3
+def b3_clicked():
+    button1.state(['!pressed'])
+    button2.state(['pressed'])
+    button3.state(['pressed'])
+    s.set("終了")
+    from keras.models import load_model
+
+
+    #import tkinter.font as font
+    #import matplotlib.pyplot as plt
+    #from keras.preprocessing.image import img_to_array, load_img
+    model = load_model('model_mnist_cnn.h5')
+    from keras.preprocessing.image import img_to_array, load_img
+
+    
+    #import cv2
+    test_img = load_img('C:\\Users\\in310\\testxx.png', grayscale=True, target_size=(28,28))
+    #test_img = cv2.imread('C:\\Users\\in310\\zero7.png') #zero
+    test_img_array = img_to_array(test_img)
+
+    test_data = test_img_array.reshape(1,784)
+    test_data = test_data.astype('float32')
+    test_data /= 255
+ 
+   # print(model.predict_classes(test_data))
+    print(model.predict_classes(test_data))
+    
+    my_font = font.Font(root,family="System",size=40,weight="bold")
+    label = ttk.Label(root, text= (model.predict_classes(test_data)),font=my_font)
+    label.place(x=460, y=140)
+    #------------xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    
+                    
+    
+button3 = ttk.Button(
+    frame1,
+#    image=icon3,
+    text='数字判定',
+    compound=TOP,
+    command=b3_clicked)
+        
+button3.grid(row=3,column=3)
+## ==================================# Button 3
+def b4_clicked():
+    button1.state(['!pressed'])
+    button2.state(['pressed'])
+    button3.state(['pressed'])
+    s.set("判定")
+    
+   # label = tkk.Label(root, text= (model.predict_classes(test_data)),font=my_font)
+   # label.place(x=100, y=30)
+    
+    
+
+button4 = ttk.Button(
+    frame1,
+#    image=icon3,
+    text='終了',
+    compound=TOP,
+    command=b4_clicked)
+        
+button4.grid(row=3,column=4)
+        
+# 
+# Label 1
+label1 = ttk.Label(
+    frame1,
+    textvariable=s)
+label1.grid(row=2,column=1,columnspan=7)
+
+root.mainloop()
+
+
